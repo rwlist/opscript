@@ -1,10 +1,13 @@
 package models
 
 import (
+	"context"
 	"github.com/containous/yaegi/interp"
 	"github.com/pkg/errors"
+	"runtime/debug"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Namespace struct {
@@ -42,15 +45,17 @@ func (n *Namespace) Eval(src string) error {
 func (n *Namespace) Act(args []string) (res string, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = errors.Errorf("recovered from panic %v", r)
+			err = errors.Errorf("recovered from panic %v.\n%s", r, debug.Stack())
 		}
 	}()
 
-	v, err := n.i.Eval("ns.HandleCmd")
-	if strings.Contains(err.Error(), "undefined: ns") {
-		return "", nil
-	}
+	ctx, _ := context.WithTimeout(context.Background(), time.Second/2)
+
+	v, err := n.i.EvalWithContext(ctx, "ns.HandleCmd")
 	if err != nil {
+		if strings.Contains(err.Error(), "undefined: ns") {
+			return "", nil
+		}
 		return "", n.wrap(err, "HandleCmd not found")
 	}
 

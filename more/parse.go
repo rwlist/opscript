@@ -13,6 +13,10 @@ func ParseOpts(msg *tgbotapi.Message) *models.Opts {
 	if s := strings.TrimPrefix(text, "/"); s != text {
 		args := strings.Fields(s)
 
+		if pos := strings.LastIndex(args[0], "@"); pos != -1 {
+			args[0] = args[0][:pos]
+		}
+
 		if len(args) > 0 {
 			opts.IsCommand = true
 			opts.Args = args

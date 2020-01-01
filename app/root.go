@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/rwlist/opscript/more"
 	"log"
@@ -25,6 +26,8 @@ func (r *Root) Handle(msg *tgbotapi.Message) {
 		// skip
 		return
 	}
+
+	spew.Dump(msg.Text, msg.From.UserName)
 
 	chat, err := r.chs.Get(msg.Chat)
 	if err != nil {
