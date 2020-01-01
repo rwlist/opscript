@@ -4,19 +4,22 @@ import (
 	"github.com/containous/yaegi/interp"
 	"github.com/pkg/errors"
 	"strconv"
+	"strings"
 )
 
 type Namespace struct {
-	Name   string
-	ChatID int64
+	Name    string
+	ChatID  int64
+	OwnerID int
 
 	i *interp.Interpreter
 }
 
-func NewNamespace(name string, chatID int64) *Namespace {
+func NewNamespace(name string, chatID int64, ownerID int) *Namespace {
 	ns := &Namespace{
-		Name:   name,
-		ChatID: chatID,
+		Name:    name,
+		ChatID:  chatID,
+		OwnerID: ownerID,
 	}
 	ns.Flush()
 
@@ -44,6 +47,9 @@ func (n *Namespace) Act(args []string) (res string, err error) {
 	}()
 
 	v, err := n.i.Eval("ns.HandleCmd")
+	if strings.Contains(err.Error(), "undefined: ns") {
+		return "", nil
+	}
 	if err != nil {
 		return "", n.wrap(err, "HandleCmd not found")
 	}

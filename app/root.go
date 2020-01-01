@@ -35,13 +35,18 @@ func (r *Root) Handle(msg *tgbotapi.Message) {
 	opts := more.ParseOpts(msg)
 	if opts.IsCommand && opts.Args[0] == "config" && chat.IsGroup() {
 		nsName := fmt.Sprintf("ns%v", msg.From.ID)
-		ns, err := r.chs.LoadNamespace(chat, nsName)
+		ns, err := r.chs.LoadNamespace(chat, nsName, msg.From.ID)
 		if err != nil {
 			log.Println(err)
 			return
 		}
 
-		r.cfg.SwitchDialog(msg.From, ns)
+		err = r.cfg.SwitchDialog(msg.From, ns)
+		if err != nil {
+			r.chs.repl.SendText(msg.Chat.ID, "Please write /start to this bot PM to receive messages.")
+			return
+		}
+
 		return
 	}
 

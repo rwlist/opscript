@@ -67,8 +67,9 @@ func (c *Configure) HandlePrivate(msg *tgbotapi.Message) {
 	help := `
 Help:
 
-/eval
-/exit`
+/eval		Add code to eval
+/flush		Reset interpreter
+/exit		Exit this dialog`
 
 	if !opts.IsCommand {
 		c.repl.SendText(msg.Chat.ID, help)
@@ -77,12 +78,25 @@ Help:
 
 	if opts.Args[0] == "eval" {
 		dialog.Status = models.WaitSrc
-		c.repl.SendText(msg.Chat.ID, "Enter code to eval")
+		resp := `Enter code to eval. Example:
+
+package ns
+
+func HandleCmd(args []string) string {
+     return "Pong!"
+}`
+		c.repl.SendText(msg.Chat.ID, resp)
+		return
+	}
+
+	if opts.Args[0] == "flush" {
+		ns.Flush()
+		c.repl.SendText(msg.Chat.ID, "Flush OK")
 		return
 	}
 
 	if opts.Args[0] == "exit" {
-		dialog = &models.Dialog{}
+		delete(c.dialogs, msg.From.ID)
 		return
 	}
 
@@ -90,15 +104,15 @@ Help:
 	return
 }
 
-func (c *Configure) SwitchDialog(user *tgbotapi.User, ns *models.Namespace) {
+func (c *Configure) SwitchDialog(user *tgbotapi.User, ns *models.Namespace) error {
 	dialog, err := c.getDialog(user.ID)
 	if err != nil {
 		log.Println(err)
-		return
+		return err
 	}
 
 	dialog.Ns = ns
 
 	info := fmt.Sprintf("You are now configuring %s", ns.GetName())
-	c.repl.SendText(int64(user.ID), info)
+	return c.repl.SendText(int64(user.ID), info)
 }

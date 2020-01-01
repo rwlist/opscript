@@ -38,10 +38,10 @@ func (c *Chats) Get(desc *tgbotapi.Chat) (*models.Chat, error) {
 	return chat, nil
 }
 
-func (c *Chats) LoadNamespace(chat *models.Chat, name string) (*models.Namespace, error) {
+func (c *Chats) LoadNamespace(chat *models.Chat, name string, ownerID int) (*models.Namespace, error) {
 	ns := chat.FindNamespaceByName(name)
 	if ns == nil {
-		ns = models.NewNamespace(name, chat.GetID())
+		ns = models.NewNamespace(name, chat.GetID(), ownerID)
 		chat.AddNamespace(ns)
 	}
 
@@ -58,7 +58,7 @@ func (c *Chats) ExecuteAll(chat *models.Chat, msg *tgbotapi.Message) {
 	for _, ns := range nss {
 		resp, err := ns.Act(opts.Args)
 		if err != nil {
-			c.repl.SendText(chat.GetID(), err.Error())
+			c.repl.SendText(int64(ns.OwnerID), err.Error())
 			continue
 		}
 
