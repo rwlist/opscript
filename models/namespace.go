@@ -37,8 +37,15 @@ func (n *Namespace) Flush() {
 	n.i = interp.New(interp.Options{})
 }
 
-func (n *Namespace) Eval(src string) error {
-	_, err := n.i.Eval(src)
+func (n *Namespace) Eval(src string) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.Errorf("recovered from panic %v.\n%s", r, debug.Stack())
+		}
+	}()
+
+	ctx, _ := context.WithTimeout(context.Background(), time.Second/2)
+	_, err = n.i.EvalWithContext(ctx, src)
 	return n.wrap(err, "failed to eval")
 }
 
